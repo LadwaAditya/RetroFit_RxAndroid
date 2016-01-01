@@ -1,19 +1,18 @@
 package com.ladwa.aditya.devourfortwitter;
 
-import android.app.ListActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
-import com.ladwa.aditya.devourfortwitter.api.Question;
 import com.ladwa.aditya.devourfortwitter.api.ServiceGenerator;
 import com.ladwa.aditya.devourfortwitter.api.StackOverFlowAPI;
 import com.ladwa.aditya.devourfortwitter.api.StackOverFlowQuestions;
-
-import java.util.ArrayList;
 
 import rx.Observable;
 import rx.Subscriber;
@@ -21,23 +20,23 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 
-public class MainActivity extends ListActivity {
+public class MainActivity extends AppCompatActivity {
 
     private final static String TAG = MainActivity.class.getSimpleName();
+    private RecyclerView mrecyclerView;
+    private RecyclerView.LayoutManager mlayoutManager;
+
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
+        mrecyclerView = (RecyclerView) findViewById(R.id.myrecyclerview);
+        mlayoutManager = new LinearLayoutManager(this);
 
-        ArrayAdapter<Question> arrayAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                new ArrayList<Question>());
-
-        setListAdapter(arrayAdapter);
-        setProgressBarIndeterminate(true);
-        setProgressBarVisibility(true);
-
+        mrecyclerView.setLayoutManager(mlayoutManager);
+        mrecyclerView.setAdapter();
 
         StackOverFlowAPI stackOverFlowAPI = ServiceGenerator.createService(StackOverFlowAPI.class);
 
@@ -81,10 +80,7 @@ public class MainActivity extends ListActivity {
 
                     @Override
                     public void onNext(StackOverFlowQuestions stackOverFlowQuestions) {
-                        setProgressBarIndeterminateVisibility(false);
-                        ArrayAdapter<Question> adapter = (ArrayAdapter<Question>) getListAdapter();
-                        adapter.clear();
-                        adapter.addAll(stackOverFlowQuestions.items);
+
                     }
                 });
 
