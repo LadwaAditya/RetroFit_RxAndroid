@@ -4,4 +4,17 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <TextView
+        android:id="@+id/textView_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lineSpacingExtra="1dp"
+        android:text="alsjdkjalsdhakjsdhashdkjahsdkjashd" />
+
+    <TextView
+        android:id="@+id/textView_link"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ajsdashdiagdasdbakshdkasdkjhaksd"
+        android:textColor="@android:color/holo_blue_light" />
 </LinearLayout>

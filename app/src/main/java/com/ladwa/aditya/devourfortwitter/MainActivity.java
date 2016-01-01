@@ -5,14 +5,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
+import com.ladwa.aditya.devourfortwitter.adapter.StackOverFlowQuestionAdapter;
+import com.ladwa.aditya.devourfortwitter.api.Question;
 import com.ladwa.aditya.devourfortwitter.api.ServiceGenerator;
 import com.ladwa.aditya.devourfortwitter.api.StackOverFlowAPI;
-import com.ladwa.aditya.devourfortwitter.api.StackOverFlowQuestions;
+
+import java.util.List;
 
 import rx.Observable;
 import rx.Subscriber;
@@ -25,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
     private RecyclerView mrecyclerView;
     private RecyclerView.LayoutManager mlayoutManager;
-
+    private StackOverFlowQuestionAdapter mAdapter;
+    private List<Question> questionList;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +38,8 @@ public class MainActivity extends AppCompatActivity {
         mlayoutManager = new LinearLayoutManager(this);
 
         mrecyclerView.setLayoutManager(mlayoutManager);
-        mrecyclerView.setAdapter();
+
+        mrecyclerView.setAdapter(new StackOverFlowQuestionAdapter(questionList));
 
         StackOverFlowAPI stackOverFlowAPI = ServiceGenerator.createService(StackOverFlowAPI.class);
 
@@ -60,27 +63,26 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
 
-        Observable<StackOverFlowQuestions> observable = stackOverFlowAPI.loadQuestionsRx("android");
+        Observable<List<Question>> observable = stackOverFlowAPI.loadQuestionRx("android");
 
         observable.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .unsubscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<StackOverFlowQuestions>() {
+                .subscribe(new Subscriber<List<Question>>() {
                     @Override
                     public void onCompleted() {
-                        Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "Success");
+
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
-                        Log.e(TAG, e.toString());
+
                     }
 
                     @Override
-                    public void onNext(StackOverFlowQuestions stackOverFlowQuestions) {
-
+                    public void onNext(List<Question> questions) {
+                        mAdapter = new StackOverFlowQuestionAdapter(questions);
+                        mrecyclerView.setAdapter(mAdapter);
                     }
                 });
 
