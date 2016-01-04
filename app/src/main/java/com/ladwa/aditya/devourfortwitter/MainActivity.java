@@ -5,18 +5,22 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.ladwa.aditya.devourfortwitter.adapter.QuestionAdapter;
 import com.ladwa.aditya.devourfortwitter.adapter.StackOverFlowQuestionAdapter;
-import com.ladwa.aditya.devourfortwitter.api.Question;
 import com.ladwa.aditya.devourfortwitter.api.ServiceGenerator;
 import com.ladwa.aditya.devourfortwitter.api.StackOverFlowAPI;
+import com.ladwa.aditya.devourfortwitter.model.QuestionModel;
+import com.ladwa.aditya.devourfortwitter.model.StackOverFlowQuestions;
 
-import java.util.List;
-
-import rx.Observable;
+import io.realm.Realm;
+import io.realm.RealmChangeListener;
+import io.realm.RealmResults;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -27,7 +31,13 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mrecyclerView;
     private RecyclerView.LayoutManager mlayoutManager;
     private StackOverFlowQuestionAdapter mAdapter;
-    private List<Question> questionList;
+    private Subscription getQuestionSubscription;
+    private Realm realm;
+    private StackOverFlowAPI stackOverFlowAPI;
+    private RealmChangeListener mrealmChangeListener;
+    private RealmResults<QuestionModel> mQuestion;
+    private QuestionAdapter mquestionAdapter;
+
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,59 +46,70 @@ public class MainActivity extends AppCompatActivity {
 
         mrecyclerView = (RecyclerView) findViewById(R.id.myrecyclerview);
         mlayoutManager = new LinearLayoutManager(this);
-
         mrecyclerView.setLayoutManager(mlayoutManager);
 
-        mrecyclerView.setAdapter(new StackOverFlowQuestionAdapter(questionList));
+        realm = Realm.getDefaultInstance();
 
-        StackOverFlowAPI stackOverFlowAPI = ServiceGenerator.createService(StackOverFlowAPI.class);
+        mrealmChangeListener = new RealmChangeListener() {
+            @Override
+            public void onChange() {
+                mrecyclerView.setAdapter(mquestionAdapter);
+                Log.d(TAG, "onChange" + mQuestion.size());
+            }
+        };
 
-
-//        Call<StackOverFlowQuestions> call = stackOverFlowAPI.loadQuestions("android");
-//
-//        call.enqueue(new Callback<StackOverFlowQuestions>() {
-//            @Override
-//            public void onResponse(Response<StackOverFlowQuestions> response, Retrofit retrofit) {
-//                setProgressBarIndeterminateVisibility(false);
-//                ArrayAdapter<Question> adapter = (ArrayAdapter<Question>) getListAdapter();
-//                adapter.clear();
-//
-//                adapter.addAll(response.body().items);
-//            }
-//
-//            @Override
-//            public void onFailure(Throwable t) {
-//
-//            }
-//        });
+        realm.addChangeListener(mrealmChangeListener);
+        mQuestion = realm.where(QuestionModel.class).findAll();
+        mquestionAdapter = new QuestionAdapter(mQuestion);
+        mquestionAdapter.notifyDataSetChanged();
+        Log.d(TAG, "onCreate " + mQuestion.size());
+        mrecyclerView.setAdapter(mquestionAdapter);
 
 
-        Observable<List<Question>> observable = stackOverFlowAPI.loadQuestionRx("android");
-
-        observable.subscribeOn(Schedulers.io())
+        stackOverFlowAPI = ServiceGenerator.createService(StackOverFlowAPI.class);
+        getQuestionSubscription = stackOverFlowAPI.loadQuestionsRx("android")
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .unsubscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<List<Question>>() {
+                .subscribe(new Subscriber<StackOverFlowQuestions>() {
                     @Override
                     public void onCompleted() {
+                        Log.d(TAG, "Completed");
 
                     }
 
                     @Override
                     public void onError(Throwable e) {
-
+                        e.printStackTrace();
                     }
 
                     @Override
-                    public void onNext(List<Question> questions) {
-                        mAdapter = new StackOverFlowQuestionAdapter(questions);
-                        mrecyclerView.setAdapter(mAdapter);
+                    public void onNext(StackOverFlowQuestions stackOverFlowQuestions) {
+
+                        realm = Realm.getDefaultInstance();
+
+                        realm.beginTransaction();
+                        realm.copyToRealmOrUpdate(stackOverFlowQuestions.getItems());
+                        realm.commitTransaction();
+
                     }
                 });
 
 
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        getQuestionSubscription.unsubscribe();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        realm.close();
+        Log.d(TAG, "OnDestroy");
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -106,9 +127,12 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+
 }

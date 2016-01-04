@@ -7,18 +7,22 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.ladwa.aditya.devourfortwitter.R;
-import com.ladwa.aditya.devourfortwitter.model.StackOverFlowQuestions;
+import com.ladwa.aditya.devourfortwitter.model.QuestionModel;
+
+import io.realm.RealmResults;
 
 /**
- * Created by Aditya on 01-Jan-16.
+ * Created by Aditya on 04-Jan-16.
  */
-public class StackOverFlowQuestionAdapter extends RecyclerView.Adapter<StackOverFlowQuestionAdapter.ViewHolder> {
+public class QuestionAdapter extends RecyclerView.Adapter<QuestionAdapter.ViewHolder> {
 
-    protected StackOverFlowQuestions mQuestions;
 
-    public StackOverFlowQuestionAdapter(StackOverFlowQuestions questions) {
-        this.mQuestions = questions;
+    RealmResults<QuestionModel> mquestionModel;
+
+    public QuestionAdapter(RealmResults<QuestionModel> mquestionModel) {
+        this.mquestionModel = mquestionModel;
     }
+
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -28,13 +32,16 @@ public class StackOverFlowQuestionAdapter extends RecyclerView.Adapter<StackOver
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.mTitle.setText(mQuestions.getItems().get(position).getTitle());
-        holder.mLink.setText(mQuestions.getItems().get(position).getLink());
+        holder.mTitle.setText(mquestionModel.get(position).getTitle());
+        holder.mLink.setText(mquestionModel.get(position).getLink());
     }
 
     @Override
     public int getItemCount() {
-        return mQuestions.getItems().size();
+//        if (mquestionModel == null)
+//            return 0;
+//        else
+            return mquestionModel.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -47,6 +54,4 @@ public class StackOverFlowQuestionAdapter extends RecyclerView.Adapter<StackOver
             this.mLink = (TextView) itemView.findViewById(R.id.textView_link);
         }
     }
-
-
 }
